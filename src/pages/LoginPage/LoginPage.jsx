@@ -3,11 +3,27 @@ import { MainContainer } from './style'
 import CimaLogo from '../../assets/images/cima-logo.png'
 import { Form, Input, Button, Checkbox } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
+import { sendNotification } from '../../services/notificationService'
 
 const LoginPage = (props) => {
   const { setIsLoggedIn } = props
-  const onFinish = values => {
-    setIsLoggedIn('true');
+  const onFinish = async (values) => {
+    const response = await fetch('http://localhost:8080/api/auth/login', {
+      method: 'post',
+      headers: {
+        'content-type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: JSON.stringify(values)
+    }).then(res => res.json())
+
+    if(response.error === 0){
+      window.localStorage.setItem('userId', response.userId)
+      setIsLoggedIn('true');
+    } else {
+      sendNotification('error', response.message, 3)
+    }
+    
   };
   return (
     <MainContainer>
@@ -21,7 +37,7 @@ const LoginPage = (props) => {
       onFinish={onFinish}
     >
       <Form.Item
-        name="username"
+        name="usernameOrEmail"
         rules={[
           {
             required: true,

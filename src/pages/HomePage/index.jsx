@@ -6,18 +6,14 @@ import { AddBox, Container, InfoDiv, Main, SubtitleText, TitleText } from './sty
 
 const HomePage = () => {
   const navigate = useNavigate();
-  const [searchModal, setSearchModal] = useState(false);
-  const handleSearch = () => {
-    setSearchModal(true)
-  }
-  const handleSearchModal = () => {
-    
-  }
+  
   const handleInspection = () => {
     navigate('/add-inspection')
   }
+  const handleSearch = () => {
+    navigate('/result')
+  }
   return (
-    <>
     <Container>
       <Breadcrumb>
         <Breadcrumb.Item href='/'>
@@ -61,37 +57,6 @@ const HomePage = () => {
           </AddBox>
       </div>
     </Container>
-    <Modal
-      title="Search"
-      visible={searchModal}
-      onOk={handleSearchModal}
-      onCancel={() => setSearchModal(false)}
-      
-    >
-      <p className="search-title">
-          Client <span>*</span>
-      </p>
-      <Input 
-        autoFocus
-        style={{ marginBottom: "1em" }}
-        allowClear
-        placeholder="Enter Client"
-      />
-      <p className="search-title">
-          Location <span>*</span>
-      </p>
-      <Input 
-        autoFocus
-        style={{ marginBottom: "1em" }}
-        allowClear
-        placeholder="Enter location"
-      />
-      <p className="search-title">
-          Date <span>*</span>
-      </p>
-      <DatePicker />
-    </Modal>
-    </>
   )
 }
 

@@ -3,6 +3,10 @@ import styled from 'styled-components';
 export const Container = styled.div`
   width  : 100%;
   height : 100%;
+
+  .ant-collapse-header {
+    background: #fafafa;
+  }
 `;
 
 export const Main = styled.div`

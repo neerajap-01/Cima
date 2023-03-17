@@ -8,6 +8,9 @@ const TableData = (props) => {
       columns={columns}
       dataSource={dataSource}
       pagination={props.pagination || false}
+      style={{
+        width: props.width ? props.width : 'none'
+      }}
     />
   )
 }

@@ -8,6 +8,7 @@ import CimaLogo from '../../assets/images/cima-logo.png'
 import { MainContainer } from './style';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
+import { sendNotification } from '../../services/notificationService'
 
 const formItemLayout = {
   labelCol: {
@@ -51,9 +52,23 @@ const SignUpForm = (props) => {
   }, [])
   const [form] = Form.useForm();
 
-  const onFinish = (values) => {
-    console.log('Received values of form: ', values);
-    navigate('/')
+  const onFinish = async (values) => {
+    const response = await fetch('http://localhost:8080/api/auth/register', {
+      method: 'post',
+      headers: {
+        'content-type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: JSON.stringify(values)
+    }).then(res => res.json())
+    if(response.error === 1){
+      sendNotification('error', response.message, 3)
+    } else {
+      sendNotification('succes', response.message, 3)
+      setTimeout(() => {
+        navigate('/')
+      }, 2000)
+    }
   };
   
   return (
@@ -140,7 +155,7 @@ const SignUpForm = (props) => {
           <Input.Password />
         </Form.Item>
 
-        <Form.Item
+        {/* <Form.Item
           name="confirm"
           label="Confirm Password"
           dependencies={['password']}
@@ -177,7 +192,7 @@ const SignUpForm = (props) => {
           <Checkbox>
             I have read the <a href="/">agreement</a>
           </Checkbox>
-        </Form.Item>
+        </Form.Item> */}
 
         <Form.Item {...tailFormItemLayout}>
           <Button type="primary" htmlType="submit">

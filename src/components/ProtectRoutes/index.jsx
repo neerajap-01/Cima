@@ -4,7 +4,6 @@ import LoginForm from '../../pages/LoginPage/LoginPage';
 
 const ProtectRoutes = (props) => {
   const { isLoggedIn, setIsLoggedIn } = props;
-  console.log("isLoggedIn", isLoggedIn)
   return isLoggedIn === 'true' ? (
     <Outlet/>
   ) : (

@@ -3,123 +3,70 @@ import { Breadcrumb, Button, Form, Steps, Input, DatePicker, Tooltip } from 'ant
 import { HomeOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { Container, Main, TitleText } from '../HomePage/styles'
 import { useNavigate } from 'react-router-dom'
-import { StepContainer } from './styles'
+import { StepContainer, TextLable } from './styles'
+import { sendNotification } from '../../services/notificationService'
+import Loader from '../../components/Loading'
 
 const { Step } = Steps;
+const customFormat = value => `custom format: ${value.format("YYYY-MM-DD")}`;
 
 const AddInspection = () => {
   const navigate = useNavigate()
   const [current, setCurrent] = useState(0)
+  const [clientFormData, setClientFormData] = useState({
+    userId: window.localStorage.getItem('userId')
+  });
+  const [partFormData, setPartFormData] = useState({
+    clientId: window.localStorage.getItem('clientId')
+  });
+  const [calibrationFormData, setCalibrationFormData] = useState({
+    clientId: window.localStorage.getItem('clientId'),
+    delay: "0",
+    frequency: "5MHZ"
+  });
+  const [loading, setLoading] = useState(false)
 
-  const next = () => {
+  // const reInitialize = () => {
+  //   setClientFormData({
+  //     userId: window.localStorage.getItem('userId')
+  //   })
+  //   setPartFormData({
+  //     clientId: window.localStorage.getItem('clientId')
+  //   })
+  //   setCalibrationFormData({
+  //     clientId: window.localStorage.getItem('clientId'),
+  //     delay: "0",
+  //     frequency: "5MHZ"
+  //   })
+  // }
+
+  const next = async () => {
+    const resp = await saveFormData();
+    if(!resp) {
+      return;
+    }
     setCurrent(current+1)
   }
 
   const prev = () => {
+    setLoading(true)
+    // reInitialize()
     setCurrent(current-1)
-  }
-
-  const handleDone = () => {
-    navigate('/new-inspection')
+    setLoading(false)
   }
 
   const handleBack = () => {
     navigate('/')
   }
 
-  const renderPartData = () => {
-    return (
-      <Fragment>
-        <TitleText
-          fontSize={"20px"}
-          fontWeight={"600"}
-          color={"#000"}
-          margin={"10px 0 0 0"}
-        >
-          Part Data
-        </TitleText>
-        <Form
-          name="part-data"
-          layout="vertical"
-          initialValues={{
-            remember: true,
-          }}
-        >
-          <Form.Item
-            label="Part Identification"
-            name="part-number"
-            rules={[
-              {
-                required: true,
-                message: 'Please input your Part Number!',
-              },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            label="Procedure"
-            name="procedure"
-            rules={[
-              {
-                required: true,
-                message: 'Please input your Procedure!',
-              },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            label="PNID #"
-            name="pnid"
-            rules={[
-              {
-                required: true,
-                message: 'Please input your PNID!',
-              },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            label="DWG #"
-            name="dwg"
-            rules={[
-              {
-                required: true,
-                message: 'Please input your DWG!',
-              },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            label="Temp"
-            name="temp"
-            rules={[
-              {
-                required: true,
-                message: 'Please input your TEMP!',
-              },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            label="MTL"
-            name="mtl"
-            rules={[
-              {
-                required: true,
-                message: 'Please input your MTL!',
-              },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-        </Form>
-      </Fragment>
-    )
+  const handleClientData = (key, value) => {
+    if(key === 'date') {
+      value = JSON.parse(value)
+    }
+    setClientFormData({
+      ...clientFormData,
+      [key]: value
+    })
   }
 
   const renderClient = () => {
@@ -133,67 +80,126 @@ const AddInspection = () => {
         >
           Client Data
         </TitleText>
-        <Form
-          name="client-data"
-          layout="vertical"
-          initialValues={{
-            remember: true,
-          }}
-        >
-          <Form.Item
-            label="Client"
-            name="client"
-            rules={[
-              {
-                required: true,
-                message: 'Please input your Client!',
-              },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            label="Location"
-            name="location"
-            rules={[
-              {
-                required: true,
-                message: 'Please input your Location!',
-              },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            label="Date"
-            name="date"
-            rules={[
-              {
-                required: true,
-                message: 'Please input your date!',
-              },
-            ]}
-          >
-            <DatePicker />
-          </Form.Item>
-          <Form.Item
-            label="Part #/Report #"
-            name="part/report"
-            rules={[
-              {
-                required: true,
-                message: 'Please enter a valid input',
-              },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-        </Form>
+        <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+          <div style={{ width: '48%' }}>
+            <TextLable>Client </TextLable>
+            <Input 
+              placeholder="Client Name"
+              style={{ width: "100%" }}
+              value={clientFormData.client}
+              allowClear
+              autoFocus
+              onChange={(e) => handleClientData('client',e.target.value)}
+            />
+            <TextLable>Location </TextLable>
+            <Input 
+              placeholder="Enter location"
+              style={{ width: "100%" }}
+              value={clientFormData.location}
+              allowClear
+              onChange={(e) => handleClientData('location',e.target.value)}
+            />
+            <div style={{ display: 'flex', flexDirection: "row", justifyContent: 'space-between' }}>
+              <div style={{ width: '45%' }}>
+              <TextLable>Cima </TextLable>
+              <Input 
+                placeholder="Enter Cima #"
+                style={{ width: "100%" }}
+                value={clientFormData.cima}
+                allowClear
+                onChange={(e) => handleClientData('cima',e.target.value)}
+              />
+              </div>
+              <div style={{ width: '45%' }}>
+              <TextLable>Exam </TextLable>
+              <Input 
+                placeholder="Enter Exam #"
+                style={{ width: "100%" }}
+                value={clientFormData.examNumber}
+                allowClear
+                onChange={(e) => handleClientData('examNumber',e.target.value)}
+              />
+              </div>
+            </div>
+            <TextLable>Date </TextLable>
+            <DatePicker 
+              style={{ width: "100%" }}
+              allowClear
+              value={clientFormData.date}
+              format="YYYY-MM-DD HH:mm" 
+              showTime={true} 
+              onChange={(e) => handleClientData('date',JSON.stringify(e))}
+            />
+            <TextLable>Purchase order </TextLable>
+            <Input 
+              placeholder="Enter purchase order"
+              style={{ width: "100%" }}
+              value={clientFormData.purchaseOrderNumber}
+              allowClear
+              onChange={(e) => handleClientData('purchaseOrderNumber',e.target.value)}
+            />
+          </div>
+          <div style={{ width: '48%' }}>
+            <div style={{ display: 'flex', flexDirection: "row", justifyContent: 'space-between' }}>
+              <div style={{ width: '45%' }}>
+              <TextLable>Report </TextLable>
+              <Input 
+                placeholder="Enter Report #"
+                style={{ width: "100%" }}
+                value={clientFormData.report}
+                allowClear
+                onChange={(e) => handleClientData('report',e.target.value)}
+              />
+              </div>
+              <div style={{ width: '45%' }}>
+              <TextLable>Part </TextLable>
+              <Input 
+                placeholder="Enter Part #"
+                style={{ width: "100%" }}
+                value={clientFormData.part}
+                allowClear
+                onChange={(e) => handleClientData('part',e.target.value)}
+              />
+              </div>
+            </div>
+            <TextLable>Specification </TextLable>
+            <Input 
+              placeholder="Enter specification"
+              style={{ width: "100%" }}
+              value={clientFormData.specification}
+              allowClear
+              onChange={(e) => handleClientData('specification',e.target.value)}
+            />
+            <TextLable>Procedure </TextLable>
+            <Input 
+              placeholder="Enter procedure"
+              style={{ width: "100%" }}
+              value={clientFormData.procedure}
+              allowClear
+              onChange={(e) => handleClientData('procedure',e.target.value)}
+            />
+            <TextLable>Acceptence Criteria </TextLable>
+            <Input 
+              placeholder="Enter purchase order"
+              style={{ width: "100%" }}
+              value={clientFormData.acceptenceCriteria}
+              allowClear
+              onChange={(e) => handleClientData('acceptenceCriteria',e.target.value)}
+            />
+          </div>
+        </div>
       </Fragment>
     )
   }
 
-  const renderCalibrationBlock = () => {
+  const handlePartData = (key, value) => {
+    setPartFormData({
+      ...partFormData,
+      [key]: value
+    })
+  }
+
+  const renderPartData = () => {
     return (
       <Fragment>
         <TitleText
@@ -202,155 +208,212 @@ const AddInspection = () => {
           color={"#000"}
           margin={"10px 0 0 0"}
         >
-          Calibration Block
+          Part Data
         </TitleText>
-        <Form
-          name="calibration-block"
-          layout="vertical"
-          initialValues={{
-            remember: true,
-          }}
-        >
-          <Form.Item
-            label="Material"
-            name="material"
-            rules={[
-              {
-                required: true,
-                message: 'Please input your material!',
-              },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            label="Surface"
-            name="surface"
-            rules={[
-              {
-                required: true,
-                message: 'Please input your surface!',
-              },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            label="Model #"
-            name="model"
-            rules={[
-              {
-                required: true,
-                message: 'Please input your Model!',
-              },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            label="Serial #"
-            name="serial"
-            rules={[
-              {
-                required: true,
-                message: 'Please input your Serial!',
-              },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            label="Probe Model"
-            name="probe-model"
-            rules={[
-              {
-                required: true,
-                message: 'Please input your Probe-Model!',
-              },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            label="Probe Serial"
-            name="probe-serial"
-            rules={[
-              {
-                required: true,
-                message: 'Please input your Probe-Serial!',
-              },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-        </Form>
+        <div style={{ width: '48%' }}>
+            <TextLable>Part Identification <span>*</span></TextLable>
+            <Input 
+              placeholder="Enter Part Identification"
+              style={{ width: "100%" }}
+              value={partFormData.partId}
+              allowClear
+              autoFocus
+              onChange={(e) => handlePartData('partId',e.target.value)}
+            />
+            <TextLable>Surface </TextLable>
+            <Input 
+              placeholder="Enter surface"
+              style={{ width: "100%" }}
+              value={partFormData.surface}
+              allowClear
+              onChange={(e) => handlePartData('surface',e.target.value)}
+            />
+            <TextLable>PNID # </TextLable>
+            <Input 
+              placeholder="Enter PNID #"
+              style={{ width: "100%" }}
+              value={partFormData.pnid}
+              allowClear
+              onChange={(e) => handlePartData('pnid',e.target.value)}
+            />
+            <TextLable>DWG # </TextLable>
+            <Input 
+              placeholder="Enter DWG #"
+              style={{ width: "100%" }}
+              value={partFormData.dwg}
+              allowClear
+              onChange={(e) => handlePartData('dwg',e.target.value)}
+            />
+            <TextLable>Temp </TextLable>
+            <Input 
+              placeholder="Enter temp"
+              style={{ width: "100%" }}
+              value={partFormData.temp}
+              allowClear
+              onChange={(e) => handlePartData('temp',e.target.value)} 
+            />
+            <TextLable>MTL </TextLable>
+            <Input 
+              placeholder="Enter MTL"
+              style={{ width: "100%" }}
+              value={partFormData.mtl}
+              allowClear
+              onChange={(e) => handlePartData('mtl',e.target.value)}
+            />
+        </div>
       </Fragment>
     )
   }
 
-  const renderPartData2 = () => {
+  const handleCalibrationData = (key, value) => {
+    setCalibrationFormData({
+      ...calibrationFormData,
+      [key]: value
+    })
+  }
+
+  const renderCalibrationBlock = () => {
     return (
       <Fragment>
-        <TitleText
-          fontSize={"20px"}
-          fontWeight={"600"}
-          color={"#000"}
-          margin={"1rem 0"}
-        >
-          Part Data - 2
-        </TitleText>
-        <Form
-          name="part-data-2"
-          layout="vertical"
-          initialValues={{
-            remember: true,
-          }}
-        >
-          <Form.Item
-            label="Velocity"
-            name="velocity"
-            rules={[
-              {
-                required: true,
-                message: 'Please input your Velocity!',
-              },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            label="Delay"
-            name="delay"
-            rules={[
-              {
-                required: true,
-                message: 'Please input your delay!',
-              },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            label="Frequency"
-            name="frequency"
-            rules={[
-              {
-                required: true,
-                message: 'Please input your frequency!',
-              },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            label="Other"
-            name="other"
-          >
-            <Input />
-          </Form.Item>
-        </Form>
+        <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+          <div style={{ width: '24%' }}>
+            <TitleText
+              fontSize={"20px"}
+              fontWeight={"600"}
+              color={"#000"}
+              margin={"10px 0 0 0"}
+            >
+              Calibration Block
+            </TitleText>
+            <TextLable>Material </TextLable>
+            <Input 
+              placeholder="Enter material"
+              style={{ width: "100%" }}
+              value={calibrationFormData.material}
+              allowClear
+              autoFocus
+              onChange={(e) => handleCalibrationData('material',e.target.value)}
+            />
+            <TextLable>Surface </TextLable>
+            <Input 
+              placeholder="Enter surface"
+              style={{ width: "100%" }}
+              value={clientFormData.surface}
+              allowClear
+              onChange={(e) => handleCalibrationData('surface',e.target.value)}
+            />
+          </div>
+          <div style={{ width: '24%' }}>
+            <TitleText
+              fontSize={"20px"}
+              fontWeight={"600"}
+              color={"#000"}
+              margin={"10px 0 0 0"}
+            >
+              Ultrasonic Equipment
+            </TitleText>
+            <TextLable>Model # </TextLable>
+            <Input 
+              placeholder="Enter model #"
+              style={{ width: "100%" }}
+              value={clientFormData.ueModel}
+              allowClear
+              onChange={(e) => handleCalibrationData('ueModel',e.target.value)}
+            />
+            <TextLable>Serial # </TextLable>
+            <Input 
+              placeholder="Enter serial #"
+              style={{ width: "100%" }}
+              value={clientFormData.ueSerial}
+              allowClear
+              onChange={(e) => handleCalibrationData('ueSerial',e.target.value)}
+            />
+          </div>
+          <div style={{ width: '24%' }}>
+            <TitleText
+              fontSize={"20px"}
+              fontWeight={"600"}
+              color={"#000"}
+              margin={"10px 0 0 0"}
+            >
+              Probe
+            </TitleText>
+            <TextLable>Probe Model # </TextLable>
+            <Input 
+              placeholder="Enter probe model #"
+              style={{ width: "100%" }}
+              value={clientFormData.probeModel}
+              allowClear
+              onChange={(e) => handleCalibrationData('probeModel',e.target.value)}
+            />
+            <TextLable>Probe Serial # </TextLable>
+            <Input 
+              placeholder="Enter probe serial #"
+              style={{ width: "100%" }}
+              value={clientFormData.probeSerial}
+              allowClear
+              onChange={(e) => handleCalibrationData('probeSerial',e.target.value)}       
+            />
+          </div>
+        </div>
       </Fragment>
     )
+  }
+
+  const saveFormData = async () => {
+    const url  = {
+      0: {
+        payload: clientFormData,
+        endpoint: 'http://localhost:8080/api/client/clientData'
+      },
+      1: {
+        payload: partFormData,
+        endpoint: 'http://localhost:8080/api/client/partData'
+      },
+      2: {
+        payload: calibrationFormData,
+        endpoint: 'http://localhost:8080/api/client/calibrationData'            
+      }
+
+    }
+    let method = 'POST';
+    let message = 'Data saved successfully';
+    let clientId = window.localStorage.getItem('clientId');
+
+    if(current === 0 && clientId){
+      url[current].endpoint = `http://localhost:8080/api/client/clientData/${clientId}`
+      method = 'PUT';
+      message = 'Data updated successfully';
+    }else if(current === 1){
+      if(partFormData.partId == undefined || partFormData.partId == ''){
+        sendNotification('error', 'Please enter part identification',  3)
+        return false;
+      }
+    }
+    const response = await fetch(url[current].endpoint, {
+      method: method,
+      headers: {
+        'Content-Type': 'application/json'
+      },    
+      body: JSON.stringify(url[current].payload),
+    }).then(res => res.json())
+    if(response?.error == 1){
+      sendNotification('error', response?.message,  3)
+      return false;
+    }
+    if(current == 0) {
+      window.localStorage.setItem('clientId', response?.id)
+    }
+    sendNotification('success', message,  3)
+    return true;
+  }
+
+  const handleDone = async () => {
+    const resp = await saveFormData();
+    if(!resp) {
+      return;
+    }
+    navigate('/new-inspection')
   }
 
   const steps = [
@@ -365,10 +428,6 @@ const AddInspection = () => {
     {
       title: "Calibration Block",
       content: renderCalibrationBlock(),
-    },
-    {
-      title: "Part Data 2",
-      content: renderPartData2(),
     },
   ];
 
@@ -397,57 +456,58 @@ const AddInspection = () => {
       >
         <LeftOutlined /> Back
       </Button>
-      <Steps
-        type='navigation'
-        size="small"
-        current={current}
-      >
-        {steps.map(item => (
-          <Step key={item.title} title={item.title} />
-        ))}
-      </Steps>
-      <StepContainer>
-      <div
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        flexDirection: 'row-reverse',
-      }}
-      >
-        {current < steps.length - 1 ? (
-          <Tooltip title="Next">
+      {loading ? <Loader /> : <>
+        <Steps
+          type='navigation'
+          size="small"
+          current={current}
+        >
+          {steps.map(item => (
+            <Step key={item.title} title={item.title} />
+          ))}
+        </Steps>
+        <StepContainer>
+        <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          flexDirection: 'row-reverse',
+        }}
+        >
+          {current < steps.length - 1 ? (
+            <Tooltip title="Next">
+              <Button
+                type="primary"
+                onClick={() => next()}
+              >
+                <RightOutlined />
+              </Button>
+            </Tooltip>
+          ) : null}
+          {current === steps.length - 1 && (          
             <Button
               type="primary"
-              onClick={() => next()}
+              onClick={handleDone}
             >
-              <RightOutlined />
+              Done
             </Button>
-          </Tooltip>
-        ) : null}
-        {current === steps.length - 1 && (          
-          <Button
-            type="primary"
-            onClick={handleDone}
-          >
-            Done
-          </Button>
-        )}
-        {current > 0 && (
-          <Tooltip title="Previous">
-            <Button
-              style={{ marginLeft: 8 }}
-              onClick={() => prev()}
-            >
-              <LeftOutlined />
-            </Button>
-          </Tooltip>
-        )}
-      </div>
-        {steps[current].content}
-      </StepContainer>
-      
+          )}
+          {current > 0 && (
+            <Tooltip title="Previous">
+              <Button
+                style={{ marginLeft: 8 }}
+                onClick={() => prev()}
+              >
+                <LeftOutlined />
+              </Button>
+            </Tooltip>
+          )}
+        </div>
+          {steps[current].content}
+        </StepContainer>
+      </>}
     </Container>
   )
 }
 
-export default AddInspection
+export default AddInspection;
