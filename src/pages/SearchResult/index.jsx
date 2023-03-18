@@ -4,24 +4,50 @@ import React, { useState, useEffect } from 'react'
 import TableData from '../../components/Table'
 import { Container, Main, TitleText } from '../HomePage/styles'
 import { sendNotification } from '../../services/notificationService'
+import { TextLable } from './styles'
+import { useNavigate } from 'react-router-dom'
 
 const { Panel } = Collapse
 
 const SearchResult = () => {
+  const navigate = useNavigate()
   const [activePanelKey, setActivePanelKey] = useState(['1'])
   const [searchModal, setSearchModal] = useState(true);
-  const [clientName, setClientName] = useState('');
+  const [searchData, setSearchData] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [clientTableData, setClientTableData] = useState([])
   const [partTableData, setPartTableData] = useState([])
   const [calibrationTableData, setCalibrationTableData] = useState([])
   const [inspectionTableData, setInspectionTableData] = useState([])
 
+  const handleGoBack = () => {
+    navigate('/')
+  }
+  const userId = window.localStorage.getItem('userId')
+  useEffect(() => {
+    setSearchData({
+      userId: parseInt(userId),
+    })
+  }, [userId])
+
+  const handleSearch = (key, val) => {
+    setSearchData({
+      ...searchData,
+      [key]: val,
+    })
+  } 
+
   const handleSearchModal = () => {
     setIsLoading(true)
     const init = async () => {
-      const userId = window.localStorage.getItem('userId')
-      const response = await fetch(`http://localhost:8080/api/client/search/${userId}/${clientName}`).then(res => res.json());
+      const response = await fetch(`http://localhost:8080/api/client/search`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(searchData),
+      }).then(res => res.json());
+
       if(response?.error === 1){
         setIsLoading(false);
         sendNotification('error', response.message, 3)
@@ -37,10 +63,6 @@ const SearchResult = () => {
     }
     init()
   }
-
-  useEffect(() => {
-    
-  }, [])
 
   const CLIENT_TABLE_COLUMNS = [
     {
@@ -340,39 +362,51 @@ const SearchResult = () => {
         title="Search"
         open={searchModal}
         footer={[
+          <Button
+            key="back"
+            onClick={handleGoBack}
+          >
+            Go back
+          </Button>,
           <Button 
             key="submit" 
             type="primary" 
             onClick={handleSearchModal}
             loading={isLoading}
           >
-            Go Home
+            Search
           </Button>,
         ]}
       >
-        <p className="search-title">
+        <TextLable>
             Client Name <span>*</span>
-        </p>
+        </TextLable>
         <Input 
           autoFocus
           style={{ marginBottom: "1em" }}
           allowClear
           placeholder="Enter Client Name"
-          onChange={(e) => setClientName(e.target.value)}
+          onChange={(e) => handleSearch('clientName', e.target.value)}
         />
-        {/* <p className="search-title">
-            Location <span>*</span>
-        </p>
+        <TextLable>
+          Location <span>*</span>
+        </TextLable>
         <Input 
-          autoFocus
           style={{ marginBottom: "1em" }}
           allowClear
           placeholder="Enter location"
+          onChange={(e) => handleSearch('location', e.target.value)}
         />
-        <p className="search-title">
-            Date <span>*</span>
-        </p>
-        <DatePicker /> */}
+        <TextLable>
+          Date <span>*</span>
+        </TextLable>
+        <Input 
+          type='date'
+          style={{ marginBottom: "1em" }}
+          allowClear
+          placeholder="Enter date"
+          onChange={(e) => handleSearch('date', e.target.value)}
+        />
       </Modal>
     </>
   )

@@ -64,10 +64,8 @@ const SignUpForm = (props) => {
     if(response.error === 1){
       sendNotification('error', response.message, 3)
     } else {
-      sendNotification('succes', response.message, 3)
-      setTimeout(() => {
-        navigate('/')
-      }, 2000)
+      sendNotification('success', response.message, 3)
+      navigate('/')
     }
   };
   

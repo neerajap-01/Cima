@@ -1,4 +1,4 @@
-import React, { Fragment, useState } from 'react'
+import React, { Fragment, useEffect, useState } from 'react'
 import { Breadcrumb, Button, Form, Steps, Input, DatePicker, Tooltip } from 'antd'
 import { HomeOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { Container, Main, TitleText } from '../HomePage/styles'
@@ -16,29 +16,29 @@ const AddInspection = () => {
   const [clientFormData, setClientFormData] = useState({
     userId: window.localStorage.getItem('userId')
   });
-  const [partFormData, setPartFormData] = useState({
-    clientId: window.localStorage.getItem('clientId')
-  });
+  const [partFormData, setPartFormData] = useState({});
   const [calibrationFormData, setCalibrationFormData] = useState({
-    clientId: window.localStorage.getItem('clientId'),
     delay: "0",
     frequency: "5MHZ"
   });
   const [loading, setLoading] = useState(false)
 
-  // const reInitialize = () => {
-  //   setClientFormData({
-  //     userId: window.localStorage.getItem('userId')
-  //   })
-  //   setPartFormData({
-  //     clientId: window.localStorage.getItem('clientId')
-  //   })
-  //   setCalibrationFormData({
-  //     clientId: window.localStorage.getItem('clientId'),
-  //     delay: "0",
-  //     frequency: "5MHZ"
-  //   })
-  // }
+  const clientId = window.localStorage.getItem('clientId')
+
+  useEffect(() => {
+    setPartFormData({
+      ...partFormData,
+      clientId: clientId
+    })
+    setCalibrationFormData({
+      ...calibrationFormData,
+      clientId: clientId
+    })
+  }, [clientId])
+
+  useEffect(()  => {
+    window.localStorage.removeItem('clientId')
+  }, [])
 
   const next = async () => {
     const resp = await saveFormData();
@@ -60,9 +60,7 @@ const AddInspection = () => {
   }
 
   const handleClientData = (key, value) => {
-    if(key === 'date') {
-      value = JSON.parse(value)
-    }
+    console.log("key, ", value)
     setClientFormData({
       ...clientFormData,
       [key]: value
@@ -122,13 +120,13 @@ const AddInspection = () => {
               </div>
             </div>
             <TextLable>Date </TextLable>
-            <DatePicker 
+            <Input
+              type="date"
               style={{ width: "100%" }}
-              allowClear
+              placeholder="Enter date"
+              defaultValue={null}
               value={clientFormData.date}
-              format="YYYY-MM-DD HH:mm" 
-              showTime={true} 
-              onChange={(e) => handleClientData('date',JSON.stringify(e))}
+              onChange={(e) => handleClientData('date',e.target.value)}
             />
             <TextLable>Purchase order </TextLable>
             <Input 

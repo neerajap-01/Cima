@@ -80,7 +80,7 @@ const NewInspection = () => {
     },
     {
       title: 'Thick',
-      dataIndex: 'thick',
+      dataIndex: 'minThick',
       key: 'thick',
       align: 'center',
     },

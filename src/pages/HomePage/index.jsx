@@ -8,6 +8,7 @@ const HomePage = () => {
   const navigate = useNavigate();
   
   const handleInspection = () => {
+    window.localStorage.removeItem('clientId')
     navigate('/add-inspection')
   }
   const handleSearch = () => {

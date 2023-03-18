@@ -19,6 +19,7 @@ const LoginPage = (props) => {
 
     if(response.error === 0){
       window.localStorage.setItem('userId', response.userId)
+      sendNotification('success', 'Login success', 3)
       setIsLoggedIn('true');
     } else {
       sendNotification('error', response.message, 3)
